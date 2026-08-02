@@ -262,13 +262,14 @@ export default function ClientVIPReport() {
           const webScore = audit.scores?.digital_presence_score || raw.scores?.digital_presence_score || (calculatedScore - 5);
 
           const rawFindings = audit.negative_findings || raw.findings || audit.findings || [];
-          const finalFindings = (rawFindings && rawFindings.length > 0) ? rawFindings.map((f: any, idx: number) => ({
+          const slicedFindings = (rawFindings && rawFindings.length > 0) ? rawFindings.slice(0, 4) : [];
+          const finalFindings = (slicedFindings && slicedFindings.length > 0) ? slicedFindings.map((f: any, idx: number) => ({
             id: f.id || idx + 1,
             title: f.title || f.issue || f.category || `Digital Gap #${idx + 1} for ${brandName}`,
             description: f.description || f.details || f.issue || `Digital presence audit for ${brandName} identified critical conversion bottlenecks across mobile & web.`,
             recommendation: f.recommendation && !f.recommendation.startsWith('Claim and optimize') ? f.recommendation : `Business Impact: ${f.impact || (idx === 2 ? 'Medium' : 'High')}`,
             category: f.category || (idx === 0 ? 'Local SEO' : idx === 1 ? 'Performance' : idx === 2 ? 'Social Funnel' : 'Trust & Conversion'),
-            impact: f.impact || (idx === 2 ? 'Medium' : 'High')
+            impact: f.impact || f.severity || (idx === 2 ? 'Medium' : 'High')
           })) : [
             {
               id: 1,
@@ -334,15 +335,31 @@ export default function ClientVIPReport() {
 
         // 1. Try Supabase Cloud Database first (table: vip_leads)
         if (supabase) {
-          const { data: dbRecord } = await supabase
+          const cleanSlug = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit|kriya_sudit|kriyasudit/g, '').replace(/[^a-z0-9]/g, '');
+
+          const { data: dbRecords } = await supabase
             .from('vip_leads')
-            .select('*')
-            .or(`id.eq.${reportId},report_number.eq.${reportId}`)
-            .maybeSingle();
-            
-          if (dbRecord) {
-            setData(formatReportData(dbRecord));
-            return;
+            .select('*');
+
+          if (dbRecords && dbRecords.length > 0) {
+            const dbRecord = dbRecords.find((b: any) => {
+              const repNo = String(b.report_number || '').toLowerCase();
+              const idStr = String(b.id || '').toLowerCase();
+              const bBrand = (b.brand_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const bInsta = (b.instagram_id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+              return repNo === String(reportId).toLowerCase() ||
+                     idStr === String(reportId).toLowerCase() ||
+                     bBrand === cleanSlug ||
+                     bInsta === cleanSlug ||
+                     (cleanSlug.length > 3 && (bBrand.includes(cleanSlug) || cleanSlug.includes(bBrand))) ||
+                     (cleanSlug.length > 3 && (bInsta.includes(cleanSlug) || cleanSlug.includes(bInsta)));
+            });
+
+            if (dbRecord) {
+              setData(formatReportData(dbRecord));
+              return;
+            }
           }
         }
 
