@@ -1272,6 +1272,10 @@ export default function ClientVIPReport() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showAccessModal && (
+        <RequestAccessModal slug={reportId} onClose={() => setShowAccessModal(false)} />
+      )}
     </div>
   );
 }
