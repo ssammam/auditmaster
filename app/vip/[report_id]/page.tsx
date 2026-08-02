@@ -487,7 +487,7 @@ export default function ClientVIPReport() {
       loc = locMatch[2].toUpperCase();
     }
 
-    const keywords = ['JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS', 'ARGENT', 'BIJOUX', 'HOLARAM', 'BEHARILAL', 'BIHARILAL', 'LALIT', 'LAL'];
+    const keywords = ['JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'JEWEL', 'KATARIA', 'INSURANCE', 'CONSULTANCY', 'SERVICES', 'SOLUTIONS', 'SYSTEMS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS', 'ARGENT', 'BIJOUX', 'HOLARAM', 'BEHARILAL', 'BIHARILAL', 'LALIT', 'LAL', 'INTERNATIONAL', 'NATIONAL', 'ASSOCIATES', 'COMPANY', 'CORP', 'CORPORATION', 'HOLDINGS', 'GROUP', 'STUDIOS', 'INFRA', 'TECHNOLOGY', 'LOGISTICS'];
     let formatted = base.toUpperCase();
     keywords.forEach(kw => {
       const idx = formatted.indexOf(kw);
@@ -563,14 +563,14 @@ export default function ClientVIPReport() {
         </motion.header>
 
         {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl pt-12 sm:pt-0">
+        <div className="relative z-10 text-center max-w-4xl pt-28 sm:pt-36 pb-12">
           {/* Title */}
           <div className="overflow-hidden">
             <motion.h1
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-[1.05] tracking-tight mb-4 break-words"
+              className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight tracking-tight mb-4 break-words"
             >
               <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/40">
                 Digital Audit for
