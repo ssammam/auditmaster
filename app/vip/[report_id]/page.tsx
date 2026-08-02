@@ -474,6 +474,30 @@ export default function ClientVIPReport() {
 
   const scoreColor = growthScore >= 80 ? '#4AE888' : growthScore >= 60 ? '#E8C14A' : growthScore >= 40 ? '#E8824A' : '#E8504A';
 
+  const displayBrandName = (() => {
+    if (data?.brand_name && data.brand_name !== 'VIP BRAND' && !data.brand_name.includes('_KRIYA_AUDIT')) return data.brand_name;
+    if (data?.audit_data?.brand_name && !data.audit_data.brand_name.includes('_KRIYA_AUDIT')) return data.audit_data.brand_name;
+    
+    const stripped = String(reportId).replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
+    const locMatch = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD|PUNE|RAJKOT|AGRA)$/i);
+    let base = stripped;
+    let loc = '';
+    if (locMatch) {
+      base = locMatch[1];
+      loc = locMatch[2].toUpperCase();
+    }
+
+    const keywords = ['JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS', 'ARGENT', 'BIJOUX', 'HOLARAM', 'BEHARILAL', 'BIHARILAL', 'LALIT', 'LAL'];
+    let formatted = base.toUpperCase();
+    keywords.forEach(kw => {
+      const idx = formatted.indexOf(kw);
+      if (idx > 0 && formatted[idx - 1] !== ' ') {
+        formatted = formatted.slice(0, idx) + ' ' + formatted.slice(idx);
+      }
+    });
+    return loc ? `${formatted.trim()} (${loc})` : formatted.trim();
+  })();
+
   return (
     <div className="min-h-screen bg-[#030306] text-white font-sans selection:bg-amber-500/30 overflow-x-hidden">
 
@@ -553,7 +577,7 @@ export default function ClientVIPReport() {
               </span>
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600">
-                {data?.brand_name || 'VIP BRAND'}
+                {displayBrandName}
               </span>
             </motion.h1>
           </div>
@@ -561,7 +585,7 @@ export default function ClientVIPReport() {
           {/* Subtitle */}
           <p className="text-white/60 mb-6 sm:mb-8 max-w-2xl text-base sm:text-lg px-2">
             This Kriya audit reveals exactly what your customers and competitors see when they search for your brand online. Here&apos;s where
-            <strong className="text-white"> {data?.brand_name || 'your brand'}</strong> stands right now.
+            <strong className="text-white"> {displayBrandName}</strong> stands right now.
           </p>
 
           {/* Quick Stats Preview */}
