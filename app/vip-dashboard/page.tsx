@@ -594,9 +594,9 @@ export default function VIPPipeline() {
                           </span>
                         </td>
                         <td className="px-6 py-5 text-right flex justify-end gap-2">
-                          {vip.status === 'enriched' && vip.report_number && (
+                          {vip.status === 'enriched' && (
                             <Link 
-                              href={`/vip/${vip.report_number}`}
+                              href={`/vip/${((vip.instagram_id && vip.instagram_id !== 'not found (verified)') ? vip.instagram_id : (vip.brand_name || 'brand')).toLowerCase().replace(/[^a-z0-9]/g, '')}_kriya_audit`}
                               target="_blank"
                               className="inline-flex items-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-amber-400 transition-colors"
                             >

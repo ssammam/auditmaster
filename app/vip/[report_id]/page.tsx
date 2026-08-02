@@ -365,14 +365,22 @@ export default function ClientVIPReport() {
         try {
           const localMaster = require('../../../FRESH_MASTER_DATABASE.json');
           if (Array.isArray(localMaster)) {
-            foundBrand = localMaster.find((b: any, idx: number) => 
-              String(b.id).toLowerCase() === String(reportId).toLowerCase() || 
-              String(b.report_number).toLowerCase() === String(reportId).toLowerCase() || 
-              String(100 + idx) === String(reportId) ||
-              (b.instagram_handle && b.instagram_handle.toLowerCase() === String(reportId).toLowerCase()) ||
-              (b.instagram_id && b.instagram_id.toLowerCase() === String(reportId).toLowerCase()) ||
-              (b.brand_name && b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') === String(reportId).toLowerCase().replace(/[^a-z0-9]/g, ''))
-            );
+            const targetClean = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit/g, '').replace(/[^a-z0-9]/g, '');
+
+            foundBrand = localMaster.find((b: any, idx: number) => {
+              const brandSlug = (b.brand_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const instaSlug = (b.instagram_id || b.instagram_handle || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const repNo = String(b.report_number || '').toLowerCase();
+              const idStr = String(b.id || '').toLowerCase();
+
+              return idStr === String(reportId).toLowerCase() || 
+                     repNo === String(reportId).toLowerCase() || 
+                     String(100 + idx) === String(reportId) ||
+                     brandSlug === targetClean ||
+                     instaSlug === targetClean ||
+                     (targetClean.length > 3 && (brandSlug.includes(targetClean) || targetClean.includes(brandSlug))) ||
+                     (targetClean.length > 3 && (instaSlug.includes(targetClean) || targetClean.includes(instaSlug)));
+            });
           }
         } catch (err) {
           console.error('Master dataset lookup error:', err);
