@@ -614,13 +614,14 @@ export default function VIPPipeline() {
                               Send Pitch
                             </button>
                           ) : (
-                            <span 
-                              title="Email outreach sending is restricted to your Local Workspace system only."
-                              className="inline-flex items-center gap-1.5 bg-white/[0.03] border border-white/10 px-3 py-2 rounded-lg text-xs font-mono text-white/40 cursor-not-allowed"
+                            <button
+                              disabled
+                              title="Send Pitch execution is restricted to your Local System workspace only."
+                              className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-white/30 cursor-not-allowed opacity-50 select-none"
                             >
-                              <Lock className="size-3 text-amber-400/80" />
-                              Local Only
-                            </span>
+                              <span className="text-xs">🔒</span>
+                              Send Pitch
+                            </button>
                           )}
                         </td>
                       </tr>
