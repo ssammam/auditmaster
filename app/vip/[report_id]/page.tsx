@@ -240,10 +240,20 @@ export default function ClientVIPReport() {
         // Helper to guarantee rich audit data, growth score, 4 findings, and unlocked status
         const formatReportData = (raw: any) => {
           if (!raw) return null;
-          const audit = raw.audit_data || raw;
-          const brandName = raw.brand_name || audit.brand_name || (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
-          const handle = raw.instagram_id || raw.instagram_handle || 'brand';
+          let brandName = raw?.brand_name || audit?.brand_name;
+          if (!brandName || brandName.includes('_KRIYA_AUDIT') || brandName.includes('_kriya_audit')) {
+            const stripped = String(reportId).replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
+            const matchLoc = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD)$/i);
+            if (matchLoc) {
+              brandName = `${matchLoc[1].replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()} (${matchLoc[2].toUpperCase()})`;
+            } else {
+              brandName = stripped.toUpperCase();
+            }
+          }
+
+          const handle = raw?.instagram_id || raw?.instagram_handle || 'brand';
           const cleanHandle = (handle && handle !== 'not found (verified)') ? handle.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand';
+          const cleanDomain = cleanHandle !== 'brand' ? cleanHandle : brandName.toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, '');
 
           let hash = 0;
           const str = (brandName + String(reportId)).toLowerCase();
@@ -317,8 +327,7 @@ export default function ClientVIPReport() {
 
           return {
             ...raw,
-            brand_name: brandName,
-            website_url: raw.website_url || audit.website_url || `www.${cleanHandle}.com`,
+            website_url: (raw.website_url && raw.website_url !== 'www.brand.com') ? raw.website_url : ((audit.website_url && audit.website_url !== 'www.brand.com') ? audit.website_url : `www.${cleanDomain}.com`),
             growth_score: finalScore,
             missed_revenue_monthly: raw.missed_revenue_monthly || audit.missed_revenue_monthly || `$${lostRev},000`,
             findings: finalFindings,
