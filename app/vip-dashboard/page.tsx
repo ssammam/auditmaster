@@ -227,18 +227,8 @@ export default function VIPPipeline() {
       try {
         const localMaster = require('../../FRESH_MASTER_DATABASE.json');
         if (Array.isArray(localMaster)) {
-          const formatted = localMaster.map((b: any, idx: number) => ({
-            id: b.id || `brand-${idx + 1}`,
-            brand_name: b.brand_name || 'Brand Candidate',
-            instagram_id: b.instagram_id || (b.instagram_handle && b.instagram_handle !== 'not found (verified)' ? b.instagram_handle : (b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand')),
-            email: b.email || `${b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'contact'}@gmail.com`,
-            phone: b.phone || b.whatsapp || '+91 98765 43210',
-            report_number: b.report_number || `${100 + idx}`,
-            status: b.status || (idx % 3 === 0 ? 'enriched' : 'pending'),
-            audit_data: b.audit_data
-          }));
-          console.log(`[VIP Dashboard] Successfully loaded all ${formatted.length} profiles.`);
-          setCandidates(formatted);
+          console.log(`[VIP Dashboard] Successfully loaded exact ${localMaster.length} profiles from master dataset.`);
+          setCandidates(localMaster);
         }
       } catch (e) {
         console.error('Failed to load local dataset fallback:', e);
