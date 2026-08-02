@@ -238,7 +238,13 @@ export default function VIPPipeline() {
     }
   };
 
+  const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   const handleUpload = async () => {
+    if (!isLocalHost) {
+      alert("🔒 Action Locked: Profile enrichment & background scrapers can only be run from your local workspace system.");
+      return;
+    }
     if (!inputText.trim()) return;
     
     setIsProcessing(true);
@@ -264,6 +270,10 @@ export default function VIPPipeline() {
   };
 
   const handleSendMail = async (vip: any) => {
+    if (!isLocalHost) {
+      alert("🔒 Action Locked: Email outreach can ONLY be sent from your Local Workspace system (localhost).");
+      return;
+    }
     try {
       const res = await fetch(`${getApiBaseUrl()}/api/vip/send-outreach`, {
         method: 'POST',
@@ -594,14 +604,24 @@ export default function VIPPipeline() {
                               View Report
                             </Link>
                           )}
-                          <button 
-                            disabled={vip.status !== 'enriched'}
-                            onClick={() => handleSendMail(vip)}
-                            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <Send className="size-4" />
-                            Send Pitch
-                          </button>
+                          {isLocalHost ? (
+                            <button 
+                              disabled={vip.status !== 'enriched'}
+                              onClick={() => handleSendMail(vip)}
+                              className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Send className="size-4" />
+                              Send Pitch
+                            </button>
+                          ) : (
+                            <span 
+                              title="Email outreach sending is restricted to your Local Workspace system only."
+                              className="inline-flex items-center gap-1.5 bg-white/[0.03] border border-white/10 px-3 py-2 rounded-lg text-xs font-mono text-white/40 cursor-not-allowed"
+                            >
+                              <Lock className="size-3 text-amber-400/80" />
+                              Local Only
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}
