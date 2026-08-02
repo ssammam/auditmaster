@@ -223,16 +223,8 @@ export default function VIPPipeline() {
       }
       throw new Error('Backend offline');
     } catch (error) {
-      console.warn('[VIP Dashboard] API unreachable. Loading local master dataset fallback.');
-      try {
-        const localMaster = require('../../FRESH_MASTER_DATABASE.json');
-        if (Array.isArray(localMaster)) {
-          console.log(`[VIP Dashboard] Successfully loaded exact ${localMaster.length} profiles from master dataset.`);
-          setCandidates(localMaster);
-        }
-      } catch (e) {
-        console.error('Failed to load local dataset fallback:', e);
-      }
+      console.warn('[VIP Dashboard] API unreachable.');
+      setCandidates([]);
     } finally {
       setIsLoading(false);
     }

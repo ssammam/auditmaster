@@ -377,7 +377,7 @@ export default function ClientVIPReport() {
           }
         }
 
-        setData(formatReportData(foundBrand));
+        setData(formatReportData({ report_number: reportId }));
       } finally {
         setLoading(false);
       }
