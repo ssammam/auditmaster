@@ -601,16 +601,25 @@ export default function VIPPipeline() {
                           </span>
                         </td>
                         <td className="px-6 py-5 text-right flex justify-end gap-2">
-                          {vip.status === 'enriched' && (
-                            <Link 
-                              href={`/vip/${(vip.brand_name || 'brand').toUpperCase().replace(/[^A-Z0-9]/g, '')}_KRIYA_AUDIT`}
-                              target="_blank"
-                              className="inline-flex items-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-amber-400 transition-colors"
-                            >
-                              <ExternalLink className="size-4" />
-                              View Report
-                            </Link>
-                          )}
+                          {vip.status === 'enriched' && (() => {
+                            const base = (vip.brand_name || 'brand').toUpperCase().replace(/[^A-Z0-9]/g, '') + '_KRIYA_AUDIT';
+                            let hash = 0;
+                            for (let i = 0; i < base.toLowerCase().length; i++) {
+                              hash = base.toLowerCase().charCodeAt(i) + ((hash << 5) - hash);
+                              hash = hash & hash;
+                            }
+                            const suffix = Math.abs(hash).toString(36).substring(0, 5).padStart(5, 'a');
+                            return (
+                              <Link 
+                                href={`/vip/${base}${suffix}`}
+                                target="_blank"
+                                className="inline-flex items-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-amber-400 transition-colors"
+                              >
+                                <ExternalLink className="size-4" />
+                                View Report
+                              </Link>
+                            );
+                          })()}
                           {isLocalHost ? (
                             <button 
                               disabled={vip.status !== 'enriched'}

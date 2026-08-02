@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { motion, useInView, useSpring, useTransform, AnimatePresence, useMotionValue } from 'framer-motion';
-import { Shield, ChevronDown, ArrowRight, Lock, Unlock, Globe, Search, Smartphone, TrendingDown, AlertTriangle, CheckCircle2, Zap, Star, BarChart3, Eye, Target, Sparkles, MapPin, ExternalLink, Crown, Mail } from 'lucide-react';
+import { Shield, ChevronDown, ArrowRight, Lock, Unlock, Globe, Search, Smartphone, TrendingDown, AlertTriangle, CheckCircle2, Zap, Star, BarChart3, Eye, Target, Sparkles, MapPin, ExternalLink, Crown, Mail, X } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
 
@@ -101,16 +101,17 @@ function MiniProgress({ label, score, color, icon: Icon, delay = 0 }: { label: s
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: delay, duration: 0.5 }}
-      className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 hover:border-amber-500/20 transition-all duration-500"
+      className="bg-white/[0.03] border border-white/[0.06] rounded-xl sm:rounded-2xl p-2.5 sm:p-4 hover:border-amber-500/20 transition-all duration-500 flex flex-col justify-between overflow-hidden"
     >
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="size-4" style={{ color }} />
-        <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">{label}</span>
+      <div className="flex items-center gap-1.5 mb-2 truncate">
+        <Icon className="size-3.5 shrink-0" style={{ color }} />
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/60 font-bold truncate">{label}</span>
       </div>
-      <div className="text-3xl font-black font-display" style={{ color }}>
-        <AnimatedCounter value={score} duration={1.8} suffix="/100" />
+      <div className="text-base sm:text-lg font-black font-display tracking-tight flex items-baseline gap-0.5 whitespace-nowrap overflow-hidden" style={{ color }}>
+        <AnimatedCounter value={score} duration={1.8} />
+        <span className="text-[10px] text-white/40 font-normal">/100</span>
       </div>
-      <div className="w-full bg-white/5 h-1.5 rounded-full mt-3 overflow-hidden">
+      <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{ backgroundColor: color }}
@@ -218,18 +219,111 @@ function AuditDetailCard({ title, text, icon: Icon, color, index }: { title: str
    ██████████████ MAIN PAGE COMPONENT ██████████████
    ════════════════════════════════════════════════════════════════ */
 
+function get5Chars(str: string) {
+  let hash = 0;
+  const s = String(str || 'kriya').toLowerCase().trim();
+  for (let i = 0; i < s.length; i++) {
+    hash = s.charCodeAt(i) + ((hash << 5) - hash);
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36).substring(0, 5).padStart(5, 'a');
+}
+
+function RequestAccessModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+  const mailSubject = encodeURIComponent(`Access Request for VIP Audit Report (${slug})`)
+  const mailBody = encodeURIComponent(
+    `Hi Kiran,\n\nI would like to request access to the VIP audit report for: ${slug}.\n\nPlease find my details below:\n- Official Business Email: \n- Company / Business Name: \n- Phone / WhatsApp Number: \n\nThank you!`
+  )
+  const mailtoUrl = `mailto:kiran@vrewkriya.com?subject=${mailSubject}&body=${mailBody}`
+
+  const handleOpenMail = () => {
+    window.location.href = mailtoUrl
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="relative max-w-md w-full rounded-3xl bg-[#0c120e] border border-amber-500/30 p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(245,158,11,0.15)] text-center"
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 size-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all"
+          >
+            <X className="size-4" />
+          </button>
+
+          <div className="size-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-5 mx-auto text-amber-400">
+            <Mail className="size-6" />
+          </div>
+
+          <h3 className="text-2xl font-bold font-display text-white mb-2">Request Access</h3>
+          <p className="text-white text-sm leading-relaxed mb-6">
+            To get access to this report, please send an access request using your <strong className="text-amber-400 font-semibold">official business email ID</strong>.
+          </p>
+
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 leading-relaxed mb-6 flex items-start gap-2.5">
+            <Sparkles className="size-4 shrink-0 text-amber-400 mt-0.5" />
+            <div>
+              <strong>Instant Drafted Email:</strong> Clicking below will open your mailbox with a pre-drafted message to <strong>kiran@vrewkriya.com</strong>. Just click send!
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleOpenMail}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-base hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all flex items-center justify-center gap-2"
+            >
+              <Mail className="size-5" />
+              Open Mailbox & Send Request
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl bg-white/5 text-white/60 hover:text-white font-medium text-sm transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  )
+}
+
 export default function ClientVIPReport() {
   const params = useParams();
   const reportId = params.report_id as string;
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [showAccessModal, setShowAccessModal] = useState(false);
   const [unlocked, setUnlocked] = useState(true);
   const [decrypting, setDecrypting] = useState(false);
 
   useEffect(() => {
     async function fetchReport() {
       try {
+        if (reportId !== 'demo') {
+          if (!reportId || reportId.length <= 5) {
+            setAccessDenied(true);
+            setLoading(false);
+            return;
+          }
+          const providedHash = reportId.slice(-5);
+          const possibleBase = reportId.slice(0, -5);
+          const expectedHash = get5Chars(possibleBase);
+
+          if (providedHash.toLowerCase() !== expectedHash.toLowerCase()) {
+            setAccessDenied(true);
+            setLoading(false);
+            return;
+          }
+        }
         let token = '';
         if (typeof document !== 'undefined') {
           const value = `; ${document.cookie}`;
@@ -355,13 +449,14 @@ export default function ClientVIPReport() {
 
         // 1. Query Supabase Cloud Database live (table: vip_leads)
         if (supabase) {
-          const cleanSlug = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit/g, '').replace(/[^a-z0-9]/g, '');
+          const fullClean = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit/g, '').replace(/[^a-z0-9]/g, '');
+          const baseSlug = fullClean.length > 5 ? fullClean.slice(0, -5) : fullClean;
 
           // Try 1: By ID or report_number directly
           const { data: dbRecord } = await supabase
             .from('vip_leads')
             .select('*')
-            .or(`id.eq.${reportId},report_number.eq.${reportId}`)
+            .or(`id.eq.${reportId},report_number.eq.${reportId},report_number.eq.${baseSlug}`)
             .maybeSingle();
             
           if (dbRecord) {
@@ -384,11 +479,14 @@ export default function ClientVIPReport() {
 
               return idStr === String(reportId).toLowerCase() || 
                      repNo === String(reportId).toLowerCase() || 
+                     repNo === baseSlug ||
                      String(100 + idx) === String(reportId) ||
-                     brandSlug === cleanSlug ||
-                     instaSlug === cleanSlug ||
-                     (cleanSlug.length > 3 && (brandSlug.includes(cleanSlug) || cleanSlug.includes(brandSlug))) ||
-                     (cleanSlug.length > 3 && (instaSlug.includes(cleanSlug) || cleanSlug.includes(instaSlug)));
+                     brandSlug === fullClean ||
+                     brandSlug === baseSlug ||
+                     instaSlug === fullClean ||
+                     instaSlug === baseSlug ||
+                     (baseSlug.length > 3 && (brandSlug.includes(baseSlug) || baseSlug.includes(brandSlug))) ||
+                     (baseSlug.length > 3 && (instaSlug.includes(baseSlug) || baseSlug.includes(instaSlug)));
             });
 
             if (matched) {
@@ -413,6 +511,40 @@ export default function ClientVIPReport() {
       setDecrypting(false);
     }, 1800);
   };
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-[#05070A] font-sans flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-amber-500/5 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-background to-background" />
+        
+        <div className="relative z-10 max-w-lg w-full bg-card/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-12 shadow-2xl flex flex-col items-center">
+          <div className="size-20 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+            <Lock className="size-10 text-amber-400" />
+          </div>
+          
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3 tracking-tight">
+            Nice Try 👋
+          </h1>
+          
+          <p className="text-muted-foreground text-base leading-relaxed mb-8">
+            Access Restricted. You need the complete authorized link with the security token to view this report.
+          </p>
+
+          <button
+            onClick={() => setShowAccessModal(true)}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-base hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all flex items-center justify-center gap-2"
+          >
+            <Lock className="size-5" />
+            Request Access
+          </button>
+        </div>
+
+        {showAccessModal && (
+          <RequestAccessModal slug={reportId} onClose={() => setShowAccessModal(false)} />
+        )}
+      </div>
+    );
+  }
 
   /* ── Loading State ── */
   if (loading) {
@@ -478,8 +610,9 @@ export default function ClientVIPReport() {
     if (data?.brand_name && data.brand_name !== 'VIP BRAND' && !data.brand_name.includes('_KRIYA_AUDIT')) return data.brand_name;
     if (data?.audit_data?.brand_name && !data.audit_data.brand_name.includes('_KRIYA_AUDIT')) return data.audit_data.brand_name;
     
-    const stripped = String(reportId).replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
-    const locMatch = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD|PUNE|RAJKOT|AGRA)$/i);
+    const cleanId = String(reportId).length > 5 ? String(reportId).slice(0, -5) : String(reportId);
+    const stripped = cleanId.replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
+    const locMatch = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|BENGALURU|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD|PUNE|RAJKOT|AGRA)$/i);
     let base = stripped;
     let loc = '';
     if (locMatch) {
@@ -487,7 +620,7 @@ export default function ClientVIPReport() {
       loc = locMatch[2].toUpperCase();
     }
 
-    const keywords = ['JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'JEWEL', 'KATARIA', 'INSURANCE', 'CONSULTANCY', 'SERVICES', 'SOLUTIONS', 'SYSTEMS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS', 'ARGENT', 'BIJOUX', 'HOLARAM', 'BEHARILAL', 'BIHARILAL', 'LALIT', 'LAL', 'INTERNATIONAL', 'NATIONAL', 'ASSOCIATES', 'COMPANY', 'CORP', 'CORPORATION', 'HOLDINGS', 'GROUP', 'STUDIOS', 'INFRA', 'TECHNOLOGY', 'LOGISTICS'];
+    const keywords = ['AIRAVATA', 'HERITAGE', 'BENGALURU', 'BANGALORE', 'MUMBAI', 'JAIPUR', 'SURAT', 'DELHI', 'HYDERABAD', 'CHENNAI', 'KOLKATA', 'VADODARA', 'AHMEDABAD', 'PUNE', 'RAJKOT', 'AGRA', 'JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'JEWEL', 'KATARIA', 'INSURANCE', 'CONSULTANCY', 'SERVICES', 'SOLUTIONS', 'SYSTEMS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS', 'ARGENT', 'BIJOUX', 'HOLARAM', 'BEHARILAL', 'BIHARILAL', 'LALIT', 'LAL', 'INTERNATIONAL', 'NATIONAL', 'ASSOCIATES', 'COMPANY', 'CORP', 'CORPORATION', 'HOLDINGS', 'GROUP', 'STUDIOS', 'INFRA', 'TECHNOLOGY', 'LOGISTICS'];
     let formatted = base.toUpperCase();
     keywords.forEach(kw => {
       const idx = formatted.indexOf(kw);
@@ -563,7 +696,7 @@ export default function ClientVIPReport() {
         </motion.header>
 
         {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl pt-28 sm:pt-36 pb-12">
+        <div className="relative z-10 text-center max-w-4xl mx-auto flex flex-col items-center justify-center pt-28 sm:pt-36 pb-12">
           {/* Title */}
           <div className="overflow-hidden">
             <motion.h1
@@ -583,7 +716,7 @@ export default function ClientVIPReport() {
           </div>
 
           {/* Subtitle */}
-          <p className="text-white/60 mb-6 sm:mb-8 max-w-2xl text-base sm:text-lg px-2">
+          <p className="text-white/60 mb-6 sm:mb-8 max-w-2xl mx-auto text-base sm:text-lg px-2">
             This Kriya audit reveals exactly what your customers and competitors see when they search for your brand online. Here&apos;s where
             <strong className="text-white"> {displayBrandName}</strong> stands right now.
           </p>
@@ -814,7 +947,7 @@ export default function ClientVIPReport() {
                       The full Kriya audit shows you exactly how your brand appears to potential customers — from search results to social profiles — and provides a clear roadmap to fix every gap.
                     </p>
                   </div>
-                  <button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-90 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-opacity">
+                  <button onClick={() => setShowAccessModal(true)} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-90 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-opacity">
                     Request Full Access
                     <ExternalLink className="size-4" />
                   </button>

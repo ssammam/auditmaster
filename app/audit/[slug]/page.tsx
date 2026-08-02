@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Cell } from 'recharts'
-import { CheckCircle2, AlertTriangle, TrendingUp, Search, Smartphone, Shield, Zap, Globe, Mail, X, Sparkles, ArrowRight } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, TrendingUp, Search, Smartphone, Shield, Zap, Globe, Mail, X, Sparkles, ArrowRight, Lock } from 'lucide-react'
 
 /* ── Typewriter Effect ── */
 function Typewriter({ text, speed = 40, className = '', delay = 0 }: { text: string; speed?: number; className?: string; delay?: number }) {
@@ -193,6 +193,71 @@ const getImpactData = (findings: any[]) => {
   ]
 }
 
+function RequestAccessModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+  const mailSubject = encodeURIComponent(`Access Request for Audit Report (${slug})`)
+  const mailBody = encodeURIComponent(
+    `Hi Kiran,\n\nI would like to request access to the audit report for: ${slug}.\n\nPlease find my details below:\n- Official Business Email: \n- Company / Business Name: \n- Phone / WhatsApp Number: \n\nThank you!`
+  )
+  const mailtoUrl = `mailto:kiran@vrewkriya.com?subject=${mailSubject}&body=${mailBody}`
+
+  const handleOpenMail = () => {
+    window.location.href = mailtoUrl
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="relative max-w-md w-full rounded-3xl bg-[#0c120e] border border-emerald-500/30 p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(16,185,129,0.15)] text-left"
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 size-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all"
+          >
+            <X className="size-4" />
+          </button>
+
+          <div className="size-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 text-emerald-400">
+            <Mail className="size-6" />
+          </div>
+
+          <h3 className="text-2xl font-bold font-display text-white mb-2">Request Access</h3>
+          <p className="text-white/70 text-sm leading-relaxed mb-6">
+            To get access to this report, please send an access request using your <strong className="text-emerald-400 font-semibold">official business email ID</strong>.
+          </p>
+
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300/90 leading-relaxed mb-6 flex items-start gap-2.5">
+            <Sparkles className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+            <div>
+              <strong>Instant Drafted Email:</strong> Clicking below will open your mailbox with a pre-drafted message to <strong>kiran@vrewkriya.com</strong>. Just click send!
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleOpenMail}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-bold text-base hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
+            >
+              <Mail className="size-5" />
+              Open Mailbox & Send Request
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl bg-white/5 text-white/60 hover:text-white font-medium text-sm transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  )
+}
+
 export default function AuditPage() {
   const params = useParams()
   const slug = params.slug as string
@@ -200,6 +265,8 @@ export default function AuditPage() {
   const [audit, setAudit] = useState<any>(null)
   const [brand, setBrand] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [showAccessModal, setShowAccessModal] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [visitorId, setVisitorId] = useState<string | null>(null)
@@ -210,10 +277,47 @@ export default function AuditPage() {
   useEffect(() => {
     if (slug === 'demo') {
       setAudit(DEMO_AUDIT)
-      setBrand(DEMO_AUDIT.brands)
+      setBrand((DEMO_AUDIT as any).brands)
       setLoading(false)
       return
     }
+
+    function get5Chars(str: string) {
+      let hash = 0;
+      const s = String(str || 'kriya').toLowerCase().trim();
+      for (let i = 0; i < s.length; i++) {
+        hash = s.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(36).substring(0, 5).padStart(5, 'a');
+    }
+
+    if (!slug || slug.length <= 5) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    const providedHash = slug.slice(-5);
+    const possibleBase = slug.slice(0, -5);
+    const expectedHash = get5Chars(possibleBase);
+
+    let isHashValid = providedHash.toLowerCase() === expectedHash.toLowerCase();
+    if (!isHashValid && slug.includes('-')) {
+      const parts = slug.split('-');
+      const lastPart = parts[parts.length - 1];
+      const basePart = parts.slice(0, -1).join('-');
+      if (lastPart.toLowerCase() === get5Chars(basePart).toLowerCase()) {
+        isHashValid = true;
+      }
+    }
+
+    if (!isHashValid) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
     fetch(`${API}/audits/slug/${slug}`)
       .then(r => r.json())
       .then(data => {
@@ -222,8 +326,7 @@ export default function AuditPage() {
         setBrand(data.brands)
       })
       .catch(() => {
-        setAudit(DEMO_AUDIT)
-        setBrand(DEMO_AUDIT.brands)
+        setNotFound(true)
       })
       .finally(() => setLoading(false))
   }, [slug])
@@ -241,6 +344,40 @@ export default function AuditPage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <div className="size-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
         <p className="text-primary font-bold uppercase tracking-widest text-sm animate-pulse">Analyzing Digital Footprint...</p>
+      </div>
+    )
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-[#05070A] font-sans flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-emerald-500/5 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 via-background to-background" />
+        
+        <div className="relative z-10 max-w-lg w-full bg-card/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-12 shadow-2xl flex flex-col items-center">
+          <div className="size-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <Lock className="size-10 text-emerald-400" />
+          </div>
+          
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3 tracking-tight">
+            Audit Access Restricted
+          </h1>
+          
+          <p className="text-muted-foreground text-base leading-relaxed mb-8">
+            The full authorized link is required to view this brand performance report. Without the complete URL, access is protected.
+          </p>
+
+          <button
+            onClick={() => setShowAccessModal(true)}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-bold text-base hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
+          >
+            <Lock className="size-5" />
+            Request Access
+          </button>
+        </div>
+
+        {showAccessModal && (
+          <RequestAccessModal slug={slug} onClose={() => setShowAccessModal(false)} />
+        )}
       </div>
     )
   }

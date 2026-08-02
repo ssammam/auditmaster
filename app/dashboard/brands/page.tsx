@@ -87,7 +87,7 @@ export default function BrandsPage() {
       })
       const data = await res.json()
       if (data.slug) {
-        window.open(`http://localhost:5173/audit/${data.slug}`, '_blank')
+        window.open(`https://auditmaster-omega.vercel.app/audit/${data.slug}`, '_blank')
         setBrands(b => b.map(br => br.id === brand.id ? { ...br, status: 'audit_done' } : br))
       }
     } catch {}

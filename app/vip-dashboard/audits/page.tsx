@@ -183,13 +183,24 @@ export default function VIPAudits() {
                       </div>
                       
                       <div className="mt-4 pt-4 border-t border-white/[0.02]">
-                        <Link 
-                          href={`/vip/${brand.report_number}`}
-                          target="_blank"
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
-                        >
-                          <ExternalLink className="size-4" /> Open Client-Facing Report Link
-                        </Link>
+                        {(() => {
+                          const base = brand.report_number || (brand.brand_name || 'brand').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          let hash = 0;
+                          for (let i = 0; i < base.toLowerCase().length; i++) {
+                            hash = base.toLowerCase().charCodeAt(i) + ((hash << 5) - hash);
+                            hash = hash & hash;
+                          }
+                          const suffix = Math.abs(hash).toString(36).substring(0, 5).padStart(5, 'a');
+                          return (
+                            <Link 
+                              href={`/vip/${base}${suffix}`}
+                              target="_blank"
+                              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
+                            >
+                              <ExternalLink className="size-4" /> Open Client-Facing Report Link
+                            </Link>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
