@@ -239,8 +239,10 @@ export default function ClientVIPReport() {
         
         // Helper to guarantee rich audit data, growth score, 4 findings, and unlocked status
         const formatReportData = (raw: any) => {
-          const brandName = raw?.brand_name || raw?.audit_data?.brand_name || (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
-          const handle = raw?.instagram_id || raw?.instagram_handle || 'brand';
+          if (!raw) return null;
+          const audit = raw.audit_data || raw;
+          const brandName = raw.brand_name || audit.brand_name || (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
+          const handle = raw.instagram_id || raw.instagram_handle || 'brand';
           const cleanHandle = (handle && handle !== 'not found (verified)') ? handle.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand';
 
           let hash = 0;
@@ -252,10 +254,10 @@ export default function ClientVIPReport() {
           const calculatedScore = 52 + (seed % 34);
           const lostRev = 35 + (seed % 50);
 
-          const rawScore = raw?.audit_data?.growth_score || raw?.growth_score;
-          const finalScore = (rawScore && rawScore > 0) ? rawScore : calculatedScore;
+          const rawScore = audit.growth_score || raw.growth_score;
+          const finalScore = (rawScore && Number(rawScore) > 0) ? Number(rawScore) : calculatedScore;
 
-          const rawFindings = raw?.audit_data?.findings || raw?.findings || raw?.audit_data?.negative_findings || [];
+          const rawFindings = audit.negative_findings || raw.findings || audit.findings || [];
           const finalFindings = (rawFindings && rawFindings.length > 0) ? rawFindings.map((f: any, idx: number) => ({
             id: f.id || idx + 1,
             title: f.title || f.issue || f.category || `Digital Gap #${idx + 1} for ${brandName}`,
@@ -301,10 +303,15 @@ export default function ClientVIPReport() {
           return {
             ...raw,
             brand_name: brandName,
-            website_url: raw?.website_url || raw?.audit_data?.website_url || `www.${cleanHandle}.com`,
+            website_url: raw.website_url || audit.website_url || `www.${cleanHandle}.com`,
             growth_score: finalScore,
-            missed_revenue_monthly: raw?.missed_revenue_monthly || raw?.audit_data?.missed_revenue_monthly || `$${lostRev},000`,
+            missed_revenue_monthly: raw.missed_revenue_monthly || audit.missed_revenue_monthly || `$${lostRev},000`,
             findings: finalFindings,
+            audit_data: {
+              ...audit,
+              growth_score: finalScore,
+              negative_findings: finalFindings
+            },
             unlocked: true
           };
         };
