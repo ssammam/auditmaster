@@ -298,10 +298,10 @@ export default function ClientVIPReport() {
           };
         };
 
-        // 1. Try Supabase Cloud Database first
+        // 1. Try Supabase Cloud Database first (table: vip_leads)
         if (supabase) {
           const { data: dbRecord } = await supabase
-            .from('vip_audits')
+            .from('vip_leads')
             .select('*')
             .or(`id.eq.${reportId},report_number.eq.${reportId}`)
             .maybeSingle();

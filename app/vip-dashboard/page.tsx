@@ -201,9 +201,9 @@ export default function VIPPipeline() {
 
   const fetchVIPs = async () => {
     try {
-      // 1. Query Supabase Cloud DB first
+      // 1. Query Supabase Cloud DB first (table: vip_leads)
       if (supabase) {
-        const { data: dbData } = await supabase.from('vip_audits').select('*');
+        const { data: dbData } = await supabase.from('vip_leads').select('*');
         if (dbData && dbData.length > 0) {
           console.log(`[VIP Dashboard] Loaded ${dbData.length} candidates from Supabase DB.`);
           setCandidates(dbData);
