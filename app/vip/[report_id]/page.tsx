@@ -332,8 +332,11 @@ export default function ClientVIPReport() {
           };
         };
 
-        // 1. Try Supabase Cloud Database first (table: vip_leads)
+        // 1. Query Supabase Cloud Database live (table: vip_leads)
         if (supabase) {
+          const cleanSlug = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit/g, '').replace(/[^a-z0-9]/g, '');
+
+          // Try 1: By ID or report_number directly
           const { data: dbRecord } = await supabase
             .from('vip_leads')
             .select('*')
@@ -344,30 +347,15 @@ export default function ClientVIPReport() {
             setData(formatReportData(dbRecord));
             return;
           }
-        }
 
-        // 2. Try Local API if running on localhost
-        try {
-          const res = await fetch(`http://localhost:5055/api/vip/report/${reportId}`, {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-          });
-          const json = await res.json();
-          if (json.success && json.data) {
-            setData(formatReportData(json.data));
-            return;
-          }
-        } catch (e) {
-          // Local API unreachable
-        }
+          // Try 2: Query all leads from Supabase and match by brand_name or instagram_id
+          const { data: allLeads } = await supabase
+            .from('vip_leads')
+            .select('*')
+            .limit(3000);
 
-        // 3. Fallback to Master Dataset lookup
-        let foundBrand: any = null;
-        try {
-          const localMaster = require('../../../FRESH_MASTER_DATABASE.json');
-          if (Array.isArray(localMaster)) {
-            const targetClean = String(reportId).toLowerCase().replace(/_kriya_audit|-kriya-audit|kriya_audit/g, '').replace(/[^a-z0-9]/g, '');
-
-            foundBrand = localMaster.find((b: any, idx: number) => {
+          if (allLeads && allLeads.length > 0) {
+            const matched = allLeads.find((b: any, idx: number) => {
               const brandSlug = (b.brand_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
               const instaSlug = (b.instagram_id || b.instagram_handle || '').toLowerCase().replace(/[^a-z0-9]/g, '');
               const repNo = String(b.report_number || '').toLowerCase();
@@ -376,14 +364,17 @@ export default function ClientVIPReport() {
               return idStr === String(reportId).toLowerCase() || 
                      repNo === String(reportId).toLowerCase() || 
                      String(100 + idx) === String(reportId) ||
-                     brandSlug === targetClean ||
-                     instaSlug === targetClean ||
-                     (targetClean.length > 3 && (brandSlug.includes(targetClean) || targetClean.includes(brandSlug))) ||
-                     (targetClean.length > 3 && (instaSlug.includes(targetClean) || targetClean.includes(instaSlug)));
+                     brandSlug === cleanSlug ||
+                     instaSlug === cleanSlug ||
+                     (cleanSlug.length > 3 && (brandSlug.includes(cleanSlug) || cleanSlug.includes(brandSlug))) ||
+                     (cleanSlug.length > 3 && (instaSlug.includes(cleanSlug) || cleanSlug.includes(instaSlug)));
             });
+
+            if (matched) {
+              setData(formatReportData(matched));
+              return;
+            }
           }
-        } catch (err) {
-          console.error('Master dataset lookup error:', err);
         }
 
         setData(formatReportData(foundBrand));
