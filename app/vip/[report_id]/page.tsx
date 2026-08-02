@@ -263,12 +263,33 @@ export default function ClientVIPReport() {
         else throw new Error('Backend data missing');
         }
       } catch (e) {
-        console.warn('Backend API offline/unreachable on Vercel. Loading client report demo data.');
+        console.warn('Backend API offline/unreachable on Vercel. Loading client report master dataset.');
+        
+        let foundBrand: any = null;
+        try {
+          const localMaster = require('../../../FRESH_MASTER_DATABASE.json');
+          if (Array.isArray(localMaster)) {
+            foundBrand = localMaster.find((b: any, idx: number) => 
+              String(b.id) === String(reportId) || 
+              String(b.report_number) === String(reportId) || 
+              String(100 + idx) === String(reportId) ||
+              (b.instagram_handle && b.instagram_handle.toLowerCase() === String(reportId).toLowerCase()) ||
+              (b.brand_name && b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') === String(reportId).toLowerCase().replace(/[^a-z0-9]/g, ''))
+            );
+          }
+        } catch (err) {
+          console.error('Master dataset lookup error:', err);
+        }
+
+        const realBrandName = foundBrand ? foundBrand.brand_name : (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
+        const handle = foundBrand ? (foundBrand.instagram_id || foundBrand.instagram_handle) : 'brand';
+        const cleanHandle = (handle && handle !== 'not found (verified)') ? handle.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand';
+
         setData({
-          brand_name: reportId ? reportId.replace(/-/g, ' ').toUpperCase() : 'Luxury Brand',
-          website_url: `www.${reportId ? reportId.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand'}.com`,
-          growth_score: 58,
-          findings: [
+          brand_name: realBrandName,
+          website_url: foundBrand?.website_url || `www.${cleanHandle}.com`,
+          growth_score: foundBrand?.growth_score || 58,
+          findings: foundBrand?.findings || [
             { id: 1, title: 'Unoptimized Meta Descriptions & Page Speed', impact: 'High', category: 'SEO', description: 'Crucial product pages lack structured metadata and take over 4.2 seconds to render on mobile.' },
             { id: 2, title: 'Inconsistent Instagram Bio & Link in Bio Flow', impact: 'High', category: 'Social', description: 'Social profiles do not direct traffic to an optimized conversion funnel, leaking potential leads.' },
             { id: 3, title: 'Missing Schema Markup & Local Search Listings', impact: 'Medium', category: 'Trust', description: 'Search engines are unable to index rich snippets due to absent JSON-LD schema.' },
