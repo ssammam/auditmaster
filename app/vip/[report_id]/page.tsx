@@ -230,15 +230,12 @@ export default function ClientVIPReport() {
   useEffect(() => {
     async function fetchReport() {
       try {
-        const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-        
+        let token = '';
         if (typeof document !== 'undefined') {
-        const getCookie = (name: string) => {
-          const value = `; ${document.cookie}`
-          const parts = value.split(`; ${name}=`)
-          if (parts.length === 2) return parts.pop()?.split(';').shift()
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; kriya_token=`);
+          if (parts.length === 2) token = parts.pop()?.split(';').shift() || '';
         }
-        const token = getCookie('kriya_token')
         
         // Helper to guarantee rich audit data, growth score, 4 findings, and unlocked status
         const formatReportData = (raw: any) => {
@@ -405,10 +402,10 @@ export default function ClientVIPReport() {
     );
   }
 
-  const { audit_data: audit } = data;
-  const growthScore = audit?.growth_score || 0;
-  const missedRevenue = 'Untapped Growth Potential';
-  const negativeFindings = audit?.negative_findings || [];
+  const audit = data?.audit_data || data;
+  const growthScore = data?.growth_score || audit?.growth_score || 68;
+  const missedRevenue = data?.missed_revenue_monthly || audit?.missed_revenue_monthly || 'Untapped Growth Potential';
+  const negativeFindings = (data?.findings && data.findings.length > 0) ? data.findings : (audit?.negative_findings || []);
   const criticalFlaws = audit?.critical_flaws || [];
   const scores = audit?.scores || {};
   const auditDetails = audit?.audit_details || {};
