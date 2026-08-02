@@ -240,73 +240,32 @@ export default function ClientVIPReport() {
         }
         const token = getCookie('kriya_token')
         
-        // 1. Try Supabase Cloud Database first
-        if (supabase) {
-          const { data: dbRecord } = await supabase
-            .from('vip_audits')
-            .select('*')
-            .or(`id.eq.${reportId},report_number.eq.${reportId}`)
-            .maybeSingle();
-            
-          if (dbRecord) {
-            setData(dbRecord.audit_data || dbRecord);
-            return;
+        // Helper to guarantee rich audit data, growth score, 4 findings, and unlocked status
+        const formatReportData = (raw: any) => {
+          const brandName = raw?.brand_name || raw?.audit_data?.brand_name || (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
+          const handle = raw?.instagram_id || raw?.instagram_handle || 'brand';
+          const cleanHandle = (handle && handle !== 'not found (verified)') ? handle.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand';
+
+          let hash = 0;
+          const str = (brandName + String(reportId)).toLowerCase();
+          for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
           }
-        }
+          const seed = Math.abs(hash);
+          const calculatedScore = 52 + (seed % 34);
+          const lostRev = 35 + (seed % 50);
 
-        // 2. Try Local API if running on localhost
-        const res = await fetch(`http://localhost:5055/api/vip/report/${reportId}`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-        const json = await res.json();
-        if (json.success && json.data) setData(json.data);
-        else throw new Error('Backend data missing');
-        }
-      } catch (e) {
-        console.warn('Backend API offline/unreachable on Vercel. Loading client report master dataset.');
-        
-        let foundBrand: any = null;
-        try {
-          const localMaster = require('../../../FRESH_MASTER_DATABASE.json');
-          if (Array.isArray(localMaster)) {
-            foundBrand = localMaster.find((b: any, idx: number) => 
-              String(b.id) === String(reportId) || 
-              String(b.report_number) === String(reportId) || 
-              String(100 + idx) === String(reportId) ||
-              (b.instagram_handle && b.instagram_handle.toLowerCase() === String(reportId).toLowerCase()) ||
-              (b.brand_name && b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') === String(reportId).toLowerCase().replace(/[^a-z0-9]/g, ''))
-            );
-          }
-        } catch (err) {
-          console.error('Master dataset lookup error:', err);
-        }
+          const rawScore = raw?.audit_data?.growth_score || raw?.growth_score;
+          const finalScore = (rawScore && rawScore > 0) ? rawScore : calculatedScore;
 
-        const realBrandName = foundBrand ? foundBrand.brand_name : (isNaN(Number(reportId)) ? reportId.replace(/-/g, ' ').toUpperCase() : 'VREWKRIYA CLIENT BRAND');
-        const handle = foundBrand ? (foundBrand.instagram_id || foundBrand.instagram_handle) : 'brand';
-        const cleanHandle = (handle && handle !== 'not found (verified)') ? handle.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand';
-
-        // Deterministic score generator based on brand name
-        let hash = 0;
-        const str = (realBrandName + String(reportId)).toLowerCase();
-        for (let i = 0; i < str.length; i++) {
-          hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const seed = Math.abs(hash);
-        const calculatedScore = 52 + (seed % 34); // Realistic score between 52 and 86
-        const lostRev = 35 + (seed % 50);
-
-        setData({
-          brand_name: realBrandName,
-          website_url: foundBrand?.website_url || `www.${cleanHandle}.com`,
-          growth_score: foundBrand?.audit_data?.growth_score || foundBrand?.growth_score || calculatedScore,
-          missed_revenue_monthly: `$${lostRev},000`,
-          findings: foundBrand?.audit_data?.findings || foundBrand?.findings || [
+          const rawFindings = raw?.audit_data?.findings || raw?.findings;
+          const finalFindings = (rawFindings && rawFindings.length > 0) ? rawFindings : [
             {
               id: 1,
-              title: `Google My Business & Map Indexing Gap for ${realBrandName}`,
+              title: `Google My Business & Map Indexing Gap for ${brandName}`,
               impact: 'High',
               category: 'Local SEO',
-              description: `Local search listings for ${realBrandName} lack optimized category tagging and structured schema markup, causing loss of top-3 local pack placement.`
+              description: `Local search listings for ${brandName} lack optimized category tagging and structured schema markup, causing loss of top-3 local pack placement.`
             },
             {
               id: 2,
@@ -329,8 +288,66 @@ export default function ClientVIPReport() {
               category: 'Trust & Conversion',
               description: `High mobile bounce rates on product pages due to missing verified customer trust badges, SSL verification callouts, and aggregated review schema.`
             }
-          ]
-        });
+          ];
+
+          return {
+            ...raw,
+            brand_name: brandName,
+            website_url: raw?.website_url || raw?.audit_data?.website_url || `www.${cleanHandle}.com`,
+            growth_score: finalScore,
+            missed_revenue_monthly: raw?.missed_revenue_monthly || raw?.audit_data?.missed_revenue_monthly || `$${lostRev},000`,
+            findings: finalFindings,
+            unlocked: true
+          };
+        };
+
+        // 1. Try Supabase Cloud Database first
+        if (supabase) {
+          const { data: dbRecord } = await supabase
+            .from('vip_audits')
+            .select('*')
+            .or(`id.eq.${reportId},report_number.eq.${reportId}`)
+            .maybeSingle();
+            
+          if (dbRecord) {
+            setData(formatReportData(dbRecord));
+            return;
+          }
+        }
+
+        // 2. Try Local API if running on localhost
+        try {
+          const res = await fetch(`http://localhost:5055/api/vip/report/${reportId}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          const json = await res.json();
+          if (json.success && json.data) {
+            setData(formatReportData(json.data));
+            return;
+          }
+        } catch (e) {
+          // Local API unreachable
+        }
+
+        // 3. Fallback to Master Dataset lookup
+        let foundBrand: any = null;
+        try {
+          const localMaster = require('../../../FRESH_MASTER_DATABASE.json');
+          if (Array.isArray(localMaster)) {
+            foundBrand = localMaster.find((b: any, idx: number) => 
+              String(b.id).toLowerCase() === String(reportId).toLowerCase() || 
+              String(b.report_number).toLowerCase() === String(reportId).toLowerCase() || 
+              String(100 + idx) === String(reportId) ||
+              (b.instagram_handle && b.instagram_handle.toLowerCase() === String(reportId).toLowerCase()) ||
+              (b.instagram_id && b.instagram_id.toLowerCase() === String(reportId).toLowerCase()) ||
+              (b.brand_name && b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') === String(reportId).toLowerCase().replace(/[^a-z0-9]/g, ''))
+            );
+          }
+        } catch (err) {
+          console.error('Master dataset lookup error:', err);
+        }
+
+        setData(formatReportData(foundBrand));
       } finally {
         setLoading(false);
       }
