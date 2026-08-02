@@ -251,28 +251,32 @@ export default function ClientVIPReport() {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
           }
           const seed = Math.abs(hash);
-          const calculatedScore = 52 + (seed % 34);
+          const calculatedScore = 32 + (seed % 14); // Realistic local score (32-45)
           const lostRev = 35 + (seed % 50);
 
           const rawScore = audit.growth_score || raw.growth_score;
           const finalScore = (rawScore && Number(rawScore) > 0) ? Number(rawScore) : calculatedScore;
+
+          const gmbScore = audit.scores?.gmb_score || raw.scores?.gmb_score || (calculatedScore + 6);
+          const instaScore = audit.scores?.instagram_score || raw.scores?.instagram_score || (calculatedScore + 2);
+          const webScore = audit.scores?.digital_presence_score || raw.scores?.digital_presence_score || (calculatedScore - 5);
 
           const rawFindings = audit.negative_findings || raw.findings || audit.findings || [];
           const finalFindings = (rawFindings && rawFindings.length > 0) ? rawFindings.map((f: any, idx: number) => ({
             id: f.id || idx + 1,
             title: f.title || f.issue || f.category || `Digital Gap #${idx + 1} for ${brandName}`,
             description: f.description || f.details || f.issue || `Digital presence audit for ${brandName} identified critical conversion bottlenecks across mobile & web.`,
-            recommendation: f.recommendation || f.solution || `Optimize digital presence and command premium pricing with Vrewkriya growth architecture.`,
-            category: f.category || (idx === 0 ? 'SEO' : idx === 1 ? 'Performance' : idx === 2 ? 'Social' : 'Trust'),
-            impact: f.impact || 'High'
+            recommendation: f.recommendation && !f.recommendation.startsWith('Claim and optimize') ? f.recommendation : `Business Impact: ${f.impact || (idx === 2 ? 'Medium' : 'High')}`,
+            category: f.category || (idx === 0 ? 'Local SEO' : idx === 1 ? 'Performance' : idx === 2 ? 'Social Funnel' : 'Trust & Conversion'),
+            impact: f.impact || (idx === 2 ? 'Medium' : 'High')
           })) : [
             {
               id: 1,
               title: `Google My Business & Map Indexing Gap for ${brandName}`,
-              category: 'SEO',
+              category: 'Local SEO',
               impact: 'High',
               description: `Local search listings for ${brandName} lack optimized category tagging and structured schema markup, causing loss of top-3 local pack placement.`,
-              recommendation: `Claim and optimize Google Business Profile with structured geo-schema tags and verified customer reviews.`
+              recommendation: `Business Impact: High`
             },
             {
               id: 2,
@@ -280,25 +284,36 @@ export default function ClientVIPReport() {
               category: 'Performance',
               impact: 'High',
               description: `Main storefront experience experiences rendering delays over 3.8s on mobile devices due to uncompressed media assets and unoptimized scripts.`,
-              recommendation: `Implement Next.js CDN edge caching and WEBP image compression to achieve under 1.2s mobile load time.`
+              recommendation: `Business Impact: High`
             },
             {
               id: 3,
               title: `Instagram Bio & Conversion Funnel Leak`,
-              category: 'Social',
+              category: 'Social Funnel',
               impact: 'Medium',
               description: `Social profiles direct organic visitor traffic to unoptimized destination links without dedicated UTM tracking or instant mobile lead capture.`,
-              recommendation: `Deploy high-converting mobile Link-in-Bio portal with automated lead capture & Instant VIP WhatsApp routing.`
+              recommendation: `Business Impact: Medium`
             },
             {
               id: 4,
               title: `Missing Customer Trust Badges & Local Review Schema`,
-              category: 'Trust',
+              category: 'Trust & Conversion',
               impact: 'High',
               description: `High mobile bounce rates on product pages due to missing verified customer trust badges, SSL verification callouts, and aggregated review schema.`,
-              recommendation: `Integrate trust verification seals, aggregated review stars, and SSL security badges across key landing pages.`
+              recommendation: `Business Impact: High`
             }
           ];
+
+          const calculatedAuditData = {
+            ...audit,
+            growth_score: finalScore,
+            negative_findings: finalFindings,
+            scores: {
+              gmb_score: gmbScore,
+              instagram_score: instaScore,
+              digital_presence_score: webScore
+            }
+          };
 
           return {
             ...raw,
@@ -307,10 +322,11 @@ export default function ClientVIPReport() {
             growth_score: finalScore,
             missed_revenue_monthly: raw.missed_revenue_monthly || audit.missed_revenue_monthly || `$${lostRev},000`,
             findings: finalFindings,
-            audit_data: {
-              ...audit,
-              growth_score: finalScore,
-              negative_findings: finalFindings
+            audit_data: calculatedAuditData,
+            scores: {
+              gmb_score: gmbScore,
+              instagram_score: instaScore,
+              digital_presence_score: webScore
             },
             unlocked: true
           };
