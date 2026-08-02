@@ -256,12 +256,12 @@ export default function ClientVIPReport() {
           const cleanDomain = cleanHandle !== 'brand' ? cleanHandle : brandName.toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, '');
 
           let hash = 0;
-          const str = (brandName + String(reportId)).toLowerCase();
+          const str = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
           for (let i = 0; i < str.length; i++) {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
           }
           const seed = Math.abs(hash);
-          const calculatedScore = 32 + (seed % 14); // Realistic local score (32-45)
+          const calculatedScore = 32 + (seed % 14); // Deterministic brand score (32-45)
           const lostRev = 35 + (seed % 50);
 
           const rawScore = audit.growth_score || raw.growth_score;
