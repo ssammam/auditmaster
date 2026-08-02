@@ -242,14 +242,25 @@ export default function ClientVIPReport() {
           if (!raw) return null;
           const audit = raw.audit_data || raw;
           let brandName = raw?.brand_name || audit?.brand_name;
-          if (!brandName || brandName.includes('_KRIYA_AUDIT') || brandName.includes('_kriya_audit')) {
+          if (!brandName || brandName.includes('_KRIYA_AUDIT') || brandName.includes('_kriya_audit') || brandName === 'VIP BRAND') {
             const stripped = String(reportId).replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
-            const matchLoc = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD)$/i);
-            if (matchLoc) {
-              brandName = `${matchLoc[1].replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()} (${matchLoc[2].toUpperCase()})`;
-            } else {
-              brandName = stripped.toUpperCase();
+            const locMatch = stripped.match(/(.*?)(MUMBAI|JAIPUR|SURAT|DELHI|BANGALORE|HYDERABAD|CHENNAI|KOLKATA|VADODARA|AHMEDABAD|PUNE|RAJKOT|AGRA)$/i);
+            let base = stripped;
+            let loc = '';
+            if (locMatch) {
+              base = locMatch[1];
+              loc = locMatch[2].toUpperCase();
             }
+
+            const keywords = ['JEWELRY', 'JEWELLERY', 'JEWELLERS', 'JEWELS', 'ORNAMENTS', 'CREATIONS', 'PRIVATE', 'LIMITED', 'PVT', 'LTD', 'EXPORTS', 'IMPEX', 'DIAMONDS', 'DIAMOND', 'GOLD', 'SILVER', 'GEMS', 'GEM', 'DESIGNERS', 'STUDIO', 'ENTERPRISES', 'TRADERS', 'INDUSTRIES', 'FASHION', 'GLOBAL', 'WORLD', 'COLLECTION', 'BOUTIQUE', 'CHAINS', 'BANGLES', 'HANDCRAFTS', 'ARTS'];
+            let formatted = base.toUpperCase();
+            keywords.forEach(kw => {
+              const idx = formatted.indexOf(kw);
+              if (idx > 0 && formatted[idx - 1] !== ' ') {
+                formatted = formatted.slice(0, idx) + ' ' + formatted.slice(idx);
+              }
+            });
+            brandName = loc ? `${formatted.trim()} (${loc})` : formatted.trim();
           }
 
           const handle = raw?.instagram_id || raw?.instagram_handle || 'brand';
@@ -542,41 +553,15 @@ export default function ClientVIPReport() {
               </span>
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600">
-                {data.brand_name}
+                {data?.brand_name || 'VIP BRAND'}
               </span>
             </motion.h1>
           </div>
 
-          {/* Brand Website URL Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.6 }}
-            className="flex justify-center mb-6"
-          >
-            <a
-              href={
-                data?.website_url || data?.website || data?.domain
-                  ? (data.website_url || data.website || data.domain).startsWith('http')
-                    ? (data.website_url || data.website || data.domain)
-                    : `https://${data.website_url || data.website || data.domain}`
-                  : `https://www.${(data?.brand_name || 'brand').toLowerCase().replace(/\s+/g, '')}.com`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4.5 py-1.5 rounded-full bg-white/5 border border-amber-500/20 hover:border-amber-500/40 text-amber-400 text-xs sm:text-sm font-mono tracking-wide transition-all hover:scale-105 shadow-md"
-            >
-              <Globe className="size-3.5" />
-              <span>
-                {data?.website_url || data?.website || data?.domain || `www.${(data?.brand_name || 'brand').toLowerCase().replace(/\s+/g, '')}.com`}
-              </span>
-            </a>
-          </motion.div>
-
           {/* Subtitle */}
           <p className="text-white/60 mb-6 sm:mb-8 max-w-2xl text-base sm:text-lg px-2">
             This Kriya audit reveals exactly what your customers and competitors see when they search for your brand online. Here&apos;s where
-            <strong className="text-white"> {data.brand_name}</strong> stands right now.
+            <strong className="text-white"> {data?.brand_name || 'your brand'}</strong> stands right now.
           </p>
 
           {/* Quick Stats Preview */}
