@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, useInView, useSpring, useTransform, AnimatePresence, useMotionValue } from 'framer-motion';
 import { Shield, ChevronDown, ArrowRight, Lock, Unlock, Globe, Search, Smartphone, TrendingDown, AlertTriangle, CheckCircle2, Zap, Star, BarChart3, Eye, Target, Sparkles, MapPin, ExternalLink, Crown, Mail } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '../../lib/supabase';
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -239,6 +240,21 @@ export default function ClientVIPReport() {
         }
         const token = getCookie('kriya_token')
         
+        // 1. Try Supabase Cloud Database first
+        if (supabase) {
+          const { data: dbRecord } = await supabase
+            .from('vip_audits')
+            .select('*')
+            .or(`id.eq.${reportId},report_number.eq.${reportId}`)
+            .maybeSingle();
+            
+          if (dbRecord) {
+            setData(dbRecord.audit_data || dbRecord);
+            return;
+          }
+        }
+
+        // 2. Try Local API if running on localhost
         const res = await fetch(`http://localhost:5055/api/vip/report/${reportId}`, {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
