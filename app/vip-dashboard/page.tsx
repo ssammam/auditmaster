@@ -201,7 +201,19 @@ export default function VIPPipeline() {
 
   const fetchVIPs = async () => {
     try {
-      // 1. Query Supabase Cloud DB live (table: vip_leads)
+      // 1. Query Serverless API Route /api/vip (server-side Supabase query)
+      try {
+        const res = await fetch('/api/vip');
+        const json = await res.json();
+        if (json.success && json.data && json.data.length > 0) {
+          console.log(`[VIP Dashboard] Loaded ${json.data.length} candidates from /api/vip.`);
+          setCandidates(json.data);
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {}
+
+      // 2. Query Supabase Cloud DB live directly
       if (supabase) {
         let allLeads: any[] = [];
         let page = 0;
@@ -220,24 +232,14 @@ export default function VIPPipeline() {
         }
 
         if (allLeads.length > 0) {
-          console.log(`[VIP Dashboard] Successfully loaded exact ${allLeads.length} candidates from Supabase DB.`);
+          console.log(`[VIP Dashboard] Loaded ${allLeads.length} candidates from Supabase DB.`);
           setCandidates(allLeads);
           setIsLoading(false);
           return;
         }
       }
-      // 2. Fallback to Local API
-      try {
-        const res = await fetch('http://localhost:5055/api/vip');
-        const json = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          setCandidates(json.data);
-          setIsLoading(false);
-          return;
-        }
-      } catch (e) {}
     } catch (error) {
-      console.warn('[VIP Dashboard] Supabase query error:', error);
+      console.warn('[VIP Dashboard] Query error:', error);
     } finally {
       setIsLoading(false);
     }
