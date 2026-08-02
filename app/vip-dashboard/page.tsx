@@ -228,14 +228,16 @@ export default function VIPPipeline() {
         const localMaster = require('../../FRESH_MASTER_DATABASE.json');
         if (Array.isArray(localMaster)) {
           const formatted = localMaster.map((b: any, idx: number) => ({
-            id: `brand-${idx + 1}`,
+            id: b.id || `brand-${idx + 1}`,
             brand_name: b.brand_name || 'Brand Candidate',
-            instagram_id: b.instagram_handle && b.instagram_handle !== 'not found (verified)' ? b.instagram_handle : (b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand'),
-            email: `${b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'contact'}@gmail.com`,
-            phone: '+91 98765 43210',
-            report_number: `${100 + idx}`,
-            status: idx % 3 === 0 ? 'enriched' : 'pending'
+            instagram_id: b.instagram_id || (b.instagram_handle && b.instagram_handle !== 'not found (verified)' ? b.instagram_handle : (b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'brand')),
+            email: b.email || `${b.brand_name ? b.brand_name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'contact'}@gmail.com`,
+            phone: b.phone || b.whatsapp || '+91 98765 43210',
+            report_number: b.report_number || `${100 + idx}`,
+            status: b.status || (idx % 3 === 0 ? 'enriched' : 'pending'),
+            audit_data: b.audit_data
           }));
+          console.log(`[VIP Dashboard] Successfully loaded all ${formatted.length} profiles.`);
           setCandidates(formatted);
         }
       } catch (e) {
