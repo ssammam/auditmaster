@@ -240,6 +240,7 @@ export default function ClientVIPReport() {
         // Helper to guarantee rich audit data, growth score, 4 findings, and unlocked status
         const formatReportData = (raw: any) => {
           if (!raw) return null;
+          const audit = raw.audit_data || raw;
           let brandName = raw?.brand_name || audit?.brand_name;
           if (!brandName || brandName.includes('_KRIYA_AUDIT') || brandName.includes('_kriya_audit')) {
             const stripped = String(reportId).replace(/_KRIYA_AUDIT|-KRIYA-AUDIT|_kriya_audit|-kriya-audit|kriya_audit/gi, '').trim();
