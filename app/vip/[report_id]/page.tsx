@@ -1002,9 +1002,7 @@ export default function ClientVIPReport() {
           <div className="text-center"></div>
 
                       <p className="text-lg text-white/35 max-w-2xl mx-auto leading-relaxed mb-12">
-                        We don&apos;t just build websites — we engineer digital environments designed to command premium pricing
-                        and convert traffic seamlessly. Based on this audit, a bespoke architecture will eliminate your current
-                        friction points and unlock your <strong className="text-amber-400">maximum growth potential</strong>.
+                        We don&apos;t just build digital experiences, we architect high-performance growth systems for ambitious brands. At VrewKriya, we combine strategy, design, technology, SEO, automation, and performance marketing to eliminate growth bottlenecks, strengthen your digital presence, and turn every customer touchpoint into a measurable business opportunity. Based on this audit, we&apos;ll craft a bespoke digital ecosystem designed to elevate your brand, increase conversions, and unlock <strong className="text-amber-400">sustainable long-term growth</strong>.
                       </p>
 
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
