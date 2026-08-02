@@ -226,6 +226,16 @@ export default function VIPPipeline() {
           return;
         }
       }
+      // 2. Fallback to Local API
+      try {
+        const res = await fetch('http://localhost:5055/api/vip');
+        const json = await res.json();
+        if (json.success && json.data && json.data.length > 0) {
+          setCandidates(json.data);
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {}
     } catch (error) {
       console.warn('[VIP Dashboard] Supabase query error:', error);
     } finally {
