@@ -201,30 +201,33 @@ export default function VIPPipeline() {
 
   const fetchVIPs = async () => {
     try {
-      // 1. Query Supabase Cloud DB first (table: vip_leads)
+      // 1. Query Supabase Cloud DB live (table: vip_leads)
       if (supabase) {
-        const { data: dbData } = await supabase.from('vip_leads').select('*');
-        if (dbData && dbData.length > 0) {
-          console.log(`[VIP Dashboard] Loaded ${dbData.length} candidates from Supabase DB.`);
-          setCandidates(dbData);
+        let allLeads: any[] = [];
+        let page = 0;
+        const pageSize = 1000;
+
+        while (true) {
+          const { data: dbData, error } = await supabase
+            .from('vip_leads')
+            .select('*')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+          if (error || !dbData || dbData.length === 0) break;
+          allLeads = allLeads.concat(dbData);
+          if (dbData.length < pageSize) break;
+          page++;
+        }
+
+        if (allLeads.length > 0) {
+          console.log(`[VIP Dashboard] Successfully loaded exact ${allLeads.length} candidates from Supabase DB.`);
+          setCandidates(allLeads);
           setIsLoading(false);
           return;
         }
       }
-
-      // 2. Try Local Backend API
-      const url = `${getApiBaseUrl()}/api/vip`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
-        setCandidates(data.data);
-        setIsLoading(false);
-        return;
-      }
-      throw new Error('Backend offline');
     } catch (error) {
-      console.warn('[VIP Dashboard] API unreachable.');
-      setCandidates([]);
+      console.warn('[VIP Dashboard] Supabase query error:', error);
     } finally {
       setIsLoading(false);
     }
